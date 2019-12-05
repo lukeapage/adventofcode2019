@@ -1,0 +1,16 @@
+{
+  "name": "adventofcode2019",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "prettier:write": "prettier **/*.js --write"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^24.9.0",
+    "prettier": "^1.19.1"
+  }
+}
