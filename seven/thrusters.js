@@ -21,12 +21,10 @@ const seqGen = (i, addOn = 0, leftNums = fillNums(i, addOn)) => {
     return returnVal;
 };
 
-let lastThrust = 0;
 const part2 = async (seq, program) => {
     const thrusterInputsWaiting = [0];
     const thrusterProcessors = [];
     const thrusterOutputs = [];
-    // console.log(seq);
     for (let thruster = 0; thruster <= 4; thruster++) {
         let hasSeq = false;
         const thisThruster = thruster;
@@ -41,11 +39,8 @@ const part2 = async (seq, program) => {
                 if (thrusterInputsWaiting[thisThruster] != null) {
                     const nextInput = thrusterInputsWaiting[thisThruster];
                     thrusterInputsWaiting[thisThruster] = null;
-                    // console.log(`got input for ${thisThruster}`);
                     return nextInput;
                 }
-
-                // console.log(`waiting for input for ${thisThruster}`);
 
                 return new Promise((resolve, reject) => {
                     thrusterInputsWaiting[thisThruster] = resolve;
@@ -53,7 +48,6 @@ const part2 = async (seq, program) => {
             },
             nextThrust => {
                 const nextThruster = thisThruster === 4 ? 0 : thisThruster + 1;
-                // console.log(`got output for ${nextThruster}`);
                 thrusterOutputs[thisThruster] = nextThrust;
 
                 if (thrusterInputsWaiting[nextThruster]) {
@@ -77,8 +71,6 @@ module.exports = {
         const seqs = seqGen(5);
         let maxThrust = 0;
         let maxSeq;
-        //console.log(`testing ${seqs.length}`);
-        //console.log(seqs);
         seqs.forEach(seq => {
             let currentThrust = 0;
             let history = [];
@@ -90,32 +82,31 @@ module.exports = {
                 history.push({ output });
                 currentThrust = output;
             }
-            // console.log(history, )
+
             if (currentThrust > maxThrust) {
                 maxThrust = currentThrust;
                 maxSeq = seq;
             }
         });
-        //    console.log(maxSeq);
+
         return maxThrust;
     },
     thrusters2: async program => {
         const seqs = seqGen(5, 5);
         let maxThrust = 0;
         let maxSeq;
-        //console.log(`testing ${seqs.length}`);
-        //console.log(seqs);
+
         await Promise.all(
             seqs.map(async seq => {
                 const currentThrust = await part2(seq, program);
-                // console.log(history, )
+
                 if (currentThrust > maxThrust) {
                     maxThrust = currentThrust;
                     maxSeq = seq;
                 }
             })
         );
-        //    console.log(maxSeq);
+
         return maxThrust;
     },
 };
