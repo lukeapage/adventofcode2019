@@ -14,12 +14,7 @@ const getParam = (program, i, modes, offset) => {
     }
 };
 
-const run = (program, input) => {
-    if (!Array.isArray(input)) {
-        input = [input];
-    } else {
-        input = input.slice(0);
-    }
+const run = async (program, cbInput, cbOutput) => {
     let output;
     program = program.slice(0);
     let increment;
@@ -55,15 +50,12 @@ const run = (program, input) => {
         }
         if (opcode === 3 || opcode === 4) {
             if (opcode === 3) {
-                if (input.length == 0) {
-                    throw new Error('not enough input provided');
-                }
-                const curInput = input.shift();
+                const curInput = await cbInput();
                 debug('input', program[i + 1], curInput);
                 program[program[i + 1]] = curInput;
             } else {
                 debug('output', getParam(program, i, modes, 1));
-                output = getParam(program, i, modes, 1);
+                cbOutput(getParam(program, i, modes, 1));
             }
             increment = 2;
             continue;
