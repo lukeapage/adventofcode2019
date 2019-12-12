@@ -35,11 +35,9 @@ module.exports = async program => {
     await processor(
         program,
         () => {
-            console.log(`input for ${y},${x} -> ${(map[y] && map[y][x]) || 0}`);
             return (map[y] && map[y][x]) || 0;
         },
         output => {
-            console.log(`output ${output}`);
             if (outputCount++ % 2 === 0) {
                 if (!map[y]) {
                     map[y] = new Array(w);
