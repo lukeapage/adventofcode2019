@@ -112,6 +112,9 @@ const run = async (program, cbInput, cbOutput) => {
             debug: 'INP',
             async fn(pos) {
                 const curInput = await cbInput();
+                if (curInput === 'QUIT') {
+                    return true;
+                }
                 program[pos] = curInput;
             },
         },
@@ -193,7 +196,11 @@ const run = async (program, cbInput, cbOutput) => {
 
         debug(op.debug, ...params);
 
-        await op.fn(...params);
+        const shouldQuit = await op.fn(...params);
+
+        if (shouldQuit === true) {
+            break;
+        }
 
         if (i === currentI) {
             i += 1 + op.params + op.addrParams;
