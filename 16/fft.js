@@ -17,35 +17,55 @@ const getPattern = (index, count) => {
     return pattern;
 };
 
-const doFft = input => {
-    const chars = input.split('');
-    return chars
-        .map((char, index) => {
-            if (index % 10 === 0) {
-                console.log('getting char', index);
-            }
-            const pattern = getPattern(index, input.length);
-            const newChar = String(
-                Math.abs(
-                    chars.reduce((total, mChar, mIndex) => {
-                        return total + Number(mChar) * pattern[mIndex];
-                    }, 0)
-                )
-            );
-            return newChar[newChar.length - 1];
-        })
+const doFft = (input, offset = 0) => {
+    const chars = input.split('').map(c => Number(c));
+    let output = '';
+    for (let j = offset; j < offset + 8; j++) {
+        const index = j;
+        const char = chars[j];
+
+        const pattern = getPattern(index, input.length);
+        const newChar = String(
+            Math.abs(
+                chars.reduce((total, mChar, mIndex) => {
+                    return total + Number(mChar) * pattern[mIndex];
+                }, 0)
+            )
+        );
+        output += newChar[newChar.length - 1];
+    }
+    return output;
+};
+
+// after n/2, the answer is the sum of all chars after n
+// so by calculating backwards and then reversing it simplifies the solution
+const doFft2 = input => {
+    const chars = input.split('').map(c => Number(c));
+    let output = '';
+    let total = 0;
+    for (let j = chars.length - 1; j >= 0; j--) {
+        total += chars[j];
+        output += String(Math.abs(total % 10));
+    }
+    return output
+        .split('')
+        .reverse()
         .join('');
 };
 
 module.exports = (input, phases, isPart2) => {
-    const offset = input.slice(0, 7);
+    const offset = Number(input.slice(0, 7));
 
     if (isPart2) {
-        input = input.repeat(10000);
+        input = input.repeat(10000).substr(offset);
+        for (let i = 0; i < phases; i++) {
+            console.log('doing phase', i);
+            input = doFft2(input);
+        }
+        return input.substr(0, 8);
     }
 
     for (let i = 0; i < phases; i++) {
-        console.log('doing phase', i);
         input = doFft(input);
     }
 

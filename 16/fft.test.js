@@ -10,6 +10,6 @@ test('part 1', () => {
     expect(fft(input, 100).slice(0, 8)).toMatchInlineSnapshot(`"28430146"`);
 });
 
-test.only('part 2', () => {
-    expect(fft(input, 100, true)).toMatchInlineSnapshot();
+test('part 2', () => {
+    expect(fft(input, 100, true)).toMatchInlineSnapshot(`"12064286"`);
 });
