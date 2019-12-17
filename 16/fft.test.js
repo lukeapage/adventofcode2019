@@ -7,7 +7,7 @@ test('example 1', () => {
 });
 
 test('part 1', () => {
-    expect(fft(input, 100).slice(0, 8)).toMatchInlineSnapshot(`"28430146"`);
+    expect(fft(input, 100).slice(0, 8)).toMatchInlineSnapshot(`"04867483"`);
 });
 
 test('part 2', () => {
