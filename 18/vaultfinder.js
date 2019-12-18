@@ -61,7 +61,7 @@ const getShortestDistances = (map, x, y) => {
 
                     hashDestToRoutes[hash] = {
                         doors,
-                        keysOnWay,
+                        keysOnWay: activeRoute.keysOnWay, // keys before the current dest
                         route: newRoute.route,
                     };
 
@@ -99,67 +99,104 @@ function findPieces(map) {
     };
 }
 
+const timings = {};
+
+const memoized = {};
+
 function getDists(map, keysLeft, keysFetched, curLocation, megaDists) {
-    const curLocationHash = `${curLocation.x},${curLocation.y}`;
-    if (!megaDists[curLocationHash]) {
-        // console.log('making shortest dists');
-        megaDists[curLocationHash] = getShortestDistances(
-            map,
-            curLocation.x,
-            curLocation.y
-        );
+    let shortestDist = Infinity;
+
+    const hashForM = keysLeft.sort().join('') + ',' + curLocation;
+    if (memoized[hashForM]) {
+        return memoized[hashForM];
     }
-    const distsFromCurLoc = megaDists[curLocationHash];
-    let keysAccessible = keysLeft.filter(
-        ({ x, y }) =>
-            distsFromCurLoc[`${x},${y}`].doors.filter(door => {
+
+    let start;
+    if (!timings[keysFetched.length]) {
+        start = Date.now();
+    }
+
+    for (let i = 0; i < keysLeft.length; i++) {
+        const firstKey = keysLeft[i];
+        const distInfo = megaDists[curLocation + firstKey];
+        if (
+            distInfo.doors.some(door => {
                 const keyToFind = door.toLowerCase();
-                return !keysFetched.find(({ key }) => key === keyToFind);
-            }).length === 0
-    );
-    /*.sort((aKey, bKey) => {
-            const aDist = distsFromCurLoc[`${aKey.x},${aKey.y}`];
-            const bDist = distsFromCurLoc[`${bKey.x},${bKey.y}`];
-            return aDist > bDist ? 1 : -1;
-        });*/
-    const dists = [];
+                const isDoorLocked = keysFetched.indexOf(keyToFind) < 0;
+                return isDoorLocked;
+            })
+        ) {
+            continue;
+        }
+        if (
+            false &&
+            keysLeft.some(
+                keyLeft =>
+                    keyLeft !== firstKey &&
+                    megaDists[curLocation + keyLeft].keysOnWay.indexOf(
+                        firstKey
+                    ) >= 0 &&
+                    !megaDists[curLocation + keyLeft].doors.some(door => {
+                        const keyToFind = door.toLowerCase();
+                        const isDoorLocked = keysFetched.indexOf(keyToFind) < 0;
+                        return isDoorLocked;
+                    })
+            )
+        ) {
+            continue;
+        }
 
-    // console.log(keysAccessible.length, 'out of', keysLeft.length);
-
-    for (let i = 0; i < keysAccessible.length; i++) {
-        const firstKey = keysAccessible[0];
         let newKeysLeft = keysLeft.filter(x => x !== firstKey);
-        let newKeysFetched = [...keysFetched, firstKey];
-        const dist =
-            distsFromCurLoc[`${firstKey.x},${firstKey.y}`].route.length;
-        const keysOnWay =
-            distsFromCurLoc[`${firstKey.x},${firstKey.y}`].keysOnWay;
+        let newKeysFetched = keysFetched.concat([firstKey]);
+        const dist = distInfo.dist;
+        const keysOnWay = distInfo.keysOnWay;
         if (keysOnWay.length) {
-            newKeysLeft = newKeysLeft.filter(
-                ({ key }) => keysOnWay.indexOf(key) === -1
+            newKeysFetched = newKeysFetched.concat(
+                keysOnWay
+                    .map(keyOnWay => newKeysLeft.find(key => key === keyOnWay))
+                    .filter(key => Boolean(key))
             );
-            newKeysFetched = [
-                ...newKeysFetched,
-                keysOnWay.map(keyOnWay =>
-                    keysLeft.find(({ key }) => key === keyOnWay)
-                ),
-            ];
+            newKeysLeft = newKeysLeft.filter(
+                key => keysOnWay.indexOf(key) === -1
+            );
         }
         if (newKeysLeft.length === 0) {
-            dists.push(dist);
+            if (dist < shortestDist) {
+                shortestDist = dist;
+            }
+        } else if (newKeysLeft.length === 1) {
+            const distUnder = megaDists[firstKey + newKeysLeft[0]].dist;
+            if (dist + distUnder < shortestDist) {
+                shortestDist = dist + distUnder;
+            }
         } else {
-            getDists(
+            const distUnder = getDists(
                 map,
                 newKeysLeft,
                 newKeysFetched,
                 firstKey,
                 megaDists
-            ).forEach(laterDist => {
-                dists.push(laterDist + dist);
-            });
+            );
+            if (dist + distUnder < shortestDist) {
+                shortestDist = dist + distUnder;
+            }
         }
     }
-    return dists;
+
+    if (!timings[keysFetched.length]) {
+        timings[keysFetched.length] = true;
+        console.log(
+            'fetched',
+            keysFetched.length,
+            '-',
+            Date.now() - start,
+            'ms'
+        );
+    }
+
+    memoized[hashForM] = shortestDist;
+
+    return shortestDist;
 }
 
 module.exports = map => {
@@ -169,6 +206,33 @@ module.exports = map => {
         .map(line => line.trim().split(''));
     const { keys, start } = findPieces(map);
     console.log('found', keys.length, start);
-    const dists = getDists(map, keys, [], start, {});
-    return dists.sort((a, b) => (a > b ? 1 : -1))[0];
+    const megaDists = {};
+    const places = [...keys, { key: '@', ...start }];
+    for (let i = 0; i < places.length; i++) {
+        const placeDists = getShortestDistances(map, places[i].x, places[i].y);
+        for (let j = 0; j < places.length; j++) {
+            if (i !== j) {
+                const dist = placeDists[`${places[j].x},${places[j].y}`];
+                if (!dist.route) {
+                    console.log(`${places[j].x},${places[j].y}`, dist);
+                }
+                megaDists[places[i].key + places[j].key] = megaDists[
+                    places[j].key + places[i].key
+                ] = {
+                    dist: dist.route.length,
+                    doors: dist.doors,
+                    keysOnWay: dist.keysOnWay,
+                };
+            }
+        }
+    }
+    console.log('calculated dists');
+    const dist = getDists(
+        map,
+        keys.map(({ key }) => key),
+        [],
+        '@',
+        megaDists
+    );
+    return dist;
 };

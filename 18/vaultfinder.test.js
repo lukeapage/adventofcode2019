@@ -64,6 +64,6 @@ test('example 5', () => {
     ).toEqual(81);
 });
 
-xtest('part 1', () => {
-    expect(vaultFinder(input)).toMatchInlineSnapshot(`undefined`);
+test.only('part 1', () => {
+    expect(vaultFinder(input)).toMatchInlineSnapshot(`4544`);
 });
