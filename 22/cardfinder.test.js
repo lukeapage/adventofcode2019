@@ -103,3 +103,9 @@ test('part 1', () => {
     }
     expect(i).toMatchInlineSnapshot(`6061`);
 });
+
+test('part 2', () => {
+    expect(
+        cardFinder(119315717514047, input, 2020, 101741582076661)
+    ).toMatchInlineSnapshot(`undefined`);
+});
