@@ -11,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "jest": "^24.9.0",
-    "prettier": "^1.19.1"
+    "prettier": "^1.19.1",
+    "prompt-input": "^3.0.0"
   }
 }
